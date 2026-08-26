@@ -18,6 +18,10 @@ class Settings:
     DB_USER = os.getenv("DB_USER", "root")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
     DB_NAME = os.getenv("DB_NAME", "enterprise_ai")
+        # 大模型配置
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com")
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "deepseek-chat")
 
 
 # 全局唯一实例，其他模块通过下面这行引用配置
