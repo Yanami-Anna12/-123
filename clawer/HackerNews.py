@@ -1,25 +1,23 @@
-import hashlib
-import json
-import re
-import time
+import hashlib, json, re, time, requests
 from datetime import datetime
 from pathlib import Path
-
-import requests
+from typing import Any
 from sqlalchemy import text
-
+from thinc.compat import enable_mxnet
 from database.mysql import SessionLocal
+from rag.embedding import embed_chunks
+from rag.milvus import save_to_milvus
 
 
 # ============================================================
-# Hacker News API 配置
+# todo Hacker News API 配置
 # ============================================================
 
 BASE_URL = "https://hacker-news.firebaseio.com/v0"
 
 
 # ============================================================
-# 数据保存目录
+# todo 数据保存目录
 # ============================================================
 
 DATA_DIR = Path("../data")
@@ -28,7 +26,7 @@ DATA_FILE = DATA_DIR / "hacker_news.json"
 
 
 # ============================================================
-# 请求头
+# todo 请求头
 # ============================================================
 
 HEADERS = {
@@ -48,7 +46,7 @@ HEADERS = {
 
 
 # ============================================================
-# 获取 Top Stories ID
+# todo 获取 Top Stories ID
 # ============================================================
 
 def get_top_story_ids(limit: int = 50) -> list[int]:
@@ -84,7 +82,7 @@ def get_top_story_ids(limit: int = 50) -> list[int]:
 
 
 # ============================================================
-# 获取单条新闻
+# todo 获取单条新闻
 # ============================================================
 
 def get_story(story_id: int) -> dict | None:
@@ -111,7 +109,7 @@ def get_story(story_id: int) -> dict | None:
 
 
 # ============================================================
-# 清理文本
+# todo 清理文本
 # ============================================================
 
 def clean_text(text: str | None) -> str:
@@ -149,7 +147,7 @@ def clean_text(text: str | None) -> str:
 
 
 # ============================================================
-# Unix 时间戳 → datetime
+# todo Unix 时间戳 → datetime
 # ============================================================
 
 def convert_timestamp(
@@ -174,7 +172,7 @@ def convert_timestamp(
 
 
 # ============================================================
-# 构造新闻正文
+# todo 构造新闻正文
 # ============================================================
 
 def build_content(
@@ -235,7 +233,7 @@ def build_content(
 
 
 # ============================================================
-# 生成内容 Hash
+# todo 生成内容 Hash
 # ============================================================
 
 def generate_content_hash(
@@ -251,7 +249,7 @@ def generate_content_hash(
 
 
 # ============================================================
-# 获取新闻列表
+# todo 获取新闻列表
 # ============================================================
 
 def get_news_list(
@@ -474,7 +472,7 @@ def get_news_list(
 
 
 # ============================================================
-# 保存 JSON
+# todo 保存 JSON
 # ============================================================
 
 def save_json(
@@ -543,7 +541,7 @@ def save_json(
 
 
 # ============================================================
-# 保存 MySQL
+# todo 保存 MySQL
 # ============================================================
 
 def save_to_mysql(
@@ -697,9 +695,73 @@ def save_to_mysql(
 
     return success_count, error_count
 
+# ============================================================
+# todo 文本切割
+# ============================================================
+
+def split_text(text:str, chunk_size:int=800, chunk_overlap:int = 100) -> list[str]:
+    """
+    将文本切分为多个chunk
+
+    :param text: 原始文本
+    :param chunk_size: 每个 Chunk 的最大字符数
+    :param chunk_overlap: Chunk 之间的重叠字符数
+    """
+    if not text:
+        return []
+    text = text.strip()
+    if len(text) <= chunk_size:
+        return [text]
+
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+
+        # 下一段向前移动 chunk_overlap
+        start = end - chunk_overlap
+    return chunks
+
+
+def split_new(new_list: list[dict[str,Any]]) -> list[dict[str,Any]]:
+    """
+        对新闻列表进行文本切分
+
+        返回：
+        [
+            {
+                "source_id": 123,
+                "title": "...",
+                "url": "...",
+                "chunk_index": 0,
+                "content": "..."
+            }
+        ]
+    """
+    chunks = []
+    for news in new_list:
+        content = news.get('content','')
+        news_chunks = split_text(content,chunk_size=800,chunk_overlap=100)
+        for index, chunk in enumerate(news_chunks):
+            chunks.append({
+                "source_id": news.get("source_id"),
+                "title": news.get("title", ""),
+                "source": news.get("source", ""),
+                "url": news.get("url", ""),
+                "publish_time": news.get("publish_time"),
+                "chunk_index": index,
+                "content": chunk,
+            })
+
+
+    return chunks
+
 
 # ============================================================
-# 查询数据库统计
+# todo 查询数据库统计
 # ============================================================
 
 def get_mysql_statistics():
@@ -766,7 +828,7 @@ def get_mysql_statistics():
 
 
 # ============================================================
-# 主程序
+# todo 主程序
 # ============================================================
 
 def main():
@@ -814,13 +876,30 @@ def main():
         )
 
         # ====================================================
-        # 第四步：数据库统计
+        # 第四步：文本切割
+        # ====================================================
+        chunks = split_new(news_list)
+        print()
+        print("=" * 60)
+        print("文本切分完成")
+        print("=" * 60)
+        print(f"新闻数量：{len(news_list)}")
+        print(f"Chunk 数量：{len(chunks)}")
+        print("=" * 60)
+
+        # Embedding
+        embedded_chunks = embed_chunks(chunks)
+
+        # 保存到 Milvus
+        save_to_milvus(embedded_chunks)
+
+        # ====================================================
+        # 第五步：数据库统计
         # ====================================================
 
         total, hacker_count = (
             get_mysql_statistics()
         )
-
         print()
         print("=" * 60)
         print(
@@ -829,26 +908,21 @@ def main():
         print("=" * 60)
 
         if total is not None:
-
             print(
                 f"新闻总数量："
                 f"{total}"
             )
-
             print(
                 f"Hacker News："
                 f"{hacker_count}"
             )
-
         print("=" * 60)
-
         print()
         print(
             "🎉 新闻采集任务完成！"
         )
 
     except requests.RequestException as e:
-
         print()
         print("=" * 60)
         print(
@@ -860,7 +934,6 @@ def main():
         print("=" * 60)
 
     except Exception as e:
-
         print()
         print("=" * 60)
         print(
@@ -873,7 +946,7 @@ def main():
 
 
 # ============================================================
-# 程序入口
+# todo 程序入口
 # ============================================================
 
 if __name__ == "__main__":
