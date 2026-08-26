@@ -147,3 +147,5 @@ INSERT INTO `news` VALUES (238, 49443338, 'Big Tech\'s Frantic Race to Quell the
 INSERT INTO `news` VALUES (245, 49439943, 'Memory Ordering in CPUs', 'Hacker News', 'matt_d', 8, 0, 'https://fgiesen.wordpress.com/2026/08/25/memory-ordering-in-cpus/', '标题：Memory Ordering in CPUs\n来源：Hacker News\n作者：matt_d\n评分：8\n评论数：0', '科技情报', '2026-08-26 04:11:34', 'ad6a82ac62586b3011999ae6b5d10c48b6ed00ecd476b0cce7f1690cb343a068', '2026-08-26 10:32:28');
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
