@@ -6,6 +6,7 @@ q1*.md
 p*.md
 答辩复习手册.md
 接口测试用例.md
+整合版测试用例.md
 
 # ===== Python =====
 __pycache__/

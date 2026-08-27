@@ -12,6 +12,9 @@ from config.constants import Code
 from utils.response import fail
 from api.chat import router as chat_router
 from api.agent import router as agent_router
+from api.crawler import router as crawler_router
+from api.knowledge import router as knowledge_router
+from api.report import router as report_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -29,6 +32,9 @@ app.add_middleware(
 # 注册路由，统一挂载到 /api 前缀下
 app.include_router(chat_router, prefix="/api")
 app.include_router(agent_router, prefix="/api")
+app.include_router(crawler_router, prefix="/api")
+app.include_router(knowledge_router, prefix="/api")
+app.include_router(report_router, prefix="/api")
 
 
 # 兜底异常：任何没被处理的报错，都统一返回 {code, message, data}
