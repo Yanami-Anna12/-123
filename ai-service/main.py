@@ -11,6 +11,7 @@ from config.settings import settings
 from config.constants import Code
 from utils.response import fail
 from api.chat import router as chat_router
+from api.agent import router as agent_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -27,6 +28,7 @@ app.add_middleware(
 
 # 注册路由，统一挂载到 /api 前缀下
 app.include_router(chat_router, prefix="/api")
+app.include_router(agent_router, prefix="/api")
 
 
 # 兜底异常：任何没被处理的报错，都统一返回 {code, message, data}
@@ -75,3 +77,4 @@ def health_db():
         return {"status": "ok", "database": "connected"}
     except Exception as e:
         return {"status": "error", "database": "disconnected", "error": str(e)}
+    

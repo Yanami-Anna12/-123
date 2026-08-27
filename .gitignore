@@ -3,6 +3,9 @@
 未命名.md
 第一阶段任务总览*.md
 q1*.md
+p*.md
+答辩复习手册.md
+接口测试用例.md
 
 # ===== Python =====
 __pycache__/
@@ -18,3 +21,4 @@ venv/
 
 #===== 数据文件夹 =====
 data/
+langgraph
