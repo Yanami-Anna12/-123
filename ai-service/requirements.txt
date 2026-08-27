@@ -6,3 +6,6 @@ sqlalchemy
 pymysql
 cryptography
 openai
+langchain
+langchain-openai
+langgraph
