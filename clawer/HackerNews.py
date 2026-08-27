@@ -5,8 +5,7 @@ from typing import Any
 from sqlalchemy import text
 from thinc.compat import enable_mxnet
 from database.mysql import SessionLocal
-from rag.embedding import embed_chunks
-from rag.milvus import save_to_milvus
+import rag  # 复用根目录 rag.py：BGE-M3 向量化 + Milvus 入库
 
 
 # ============================================================
@@ -828,6 +827,38 @@ def get_mysql_statistics():
 
 
 # ============================================================
+# todo 向量化 + 写入 Milvus
+# ============================================================
+
+def embed_and_save_to_milvus(chunks: list[dict[str, Any]]) -> int:
+    """
+    把切好的 chunk 用 BGE-M3 向量化（Dense + Sparse）并写入 Milvus。
+
+    复用根目录 rag.py 的本地模型与 intel_rag 集合（字段：text/source/dense_vector/sparse_vector）。
+
+    返回：写入的 chunk 数量。
+    """
+    if not chunks:
+        print("没有 chunk 需要入库")
+        return 0
+
+    embeds = rag._embed_texts([c["content"] for c in chunks])
+    client = rag._init_collection()
+    rows = [
+        {
+            "text": ch["content"],
+            "source": ch.get("source", "") or ch.get("title", ""),
+            "dense_vector": e["dense"],
+            "sparse_vector": e["sparse"],
+        }
+        for ch, e in zip(chunks, embeds)
+    ]
+    client.insert(rag.MILVUS_COLLECTION, data=rows)
+    client.flush(rag.MILVUS_COLLECTION)
+    return len(rows)
+
+
+# ============================================================
 # todo 主程序
 # ============================================================
 
@@ -887,11 +918,8 @@ def main():
         print(f"Chunk 数量：{len(chunks)}")
         print("=" * 60)
 
-        # Embedding
-        embedded_chunks = embed_chunks(chunks)
-
-        # 保存到 Milvus
-        save_to_milvus(embedded_chunks)
+        # Embedding + 保存到 Milvus
+        embed_and_save_to_milvus(chunks)
 
         # ====================================================
         # 第五步：数据库统计
