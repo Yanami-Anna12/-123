@@ -1,0 +1,35 @@
+# ===== Web 框架 =====
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+
+# ===== 数据库（MySQL）=====
+sqlalchemy
+pymysql
+cryptography
+
+# ===== 大模型 / LangChain / LangGraph =====
+openai
+langchain
+langchain-core
+langchain-text-splitters
+langchain-openai
+langchain-deepseek
+langchain-mcp-adapters
+langgraph
+
+# ===== MCP =====
+fastmcp
+
+# ===== 爬虫 =====
+requests
+
+# ===== RAG（向量库 + Embedding + 文档解析）=====
+pymilvus
+sentence-transformers
+pypdf
+python-docx
+
+# BGE-M3 混合检索（Dense+Sparse）用，体积较大，需要时再装：
+# FlagEmbedding

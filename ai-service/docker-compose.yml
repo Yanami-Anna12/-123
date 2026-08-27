@@ -1,8 +1,0 @@
-# 企业智能情报平台 - AI 服务编排
-services:
-  ai-service:
-    build: .
-    container_name: ai-service
-    ports:
-      - "8000:8000"      # 宿主机8000 → 容器8000
-    restart: unless-stopped
