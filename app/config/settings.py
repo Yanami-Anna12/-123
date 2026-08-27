@@ -46,14 +46,14 @@ class Settings:
     MILVUS_PORT = os.getenv("MILVUS_PORT", "19530")
     MILVUS_COLLECTION = os.getenv("MILVUS_COLLECTION", "intel_rag")
 
-    # ===== RAG：本地模型路径（按需下载后放到 data/models/ 下）=====
+    # ===== RAG：本地模型路径（bge-base-zh-v1.5，可在 .env 覆盖）=====
     EMBEDDING_MODEL_PATH = os.getenv(
         "EMBEDDING_MODEL_PATH",
-        str(ROOT / "data" / "models" / "bge-m3"),
+        str(ROOT / "data" / "models" / "bge-base-zh-v1.5"),
     )
     RERANKER_MODEL_PATH = os.getenv(
         "RERANKER_MODEL_PATH",
-        str(ROOT / "data" / "models" / "BAAI--bge-reranker-large" / "snapshots" / "master"),
+        str(ROOT / "data" / "models" / "bge-reranker-large"),
     )
 
     # ===== 文本切分与检索参数 =====
